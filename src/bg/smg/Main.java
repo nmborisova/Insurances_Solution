@@ -11,12 +11,12 @@ public class Main {
         File file = new File("insurances.txt");
 
         Scanner input = null;
-        List<Car> list = new ArrayList<>();
+        Map<String, Car> list = new HashMap<>();
         //VIN, counter insurances
         Map<String, Integer> insCars = new HashMap<>();
         //VIN, owners
         Map<String, Set<String>> vinOwners = new HashMap<>();
-
+        //VIN, Car obj latest insured
         Map<String, Car> insRegNo = new HashMap<>();
         try {
             input = new Scanner(file);
@@ -31,7 +31,7 @@ public class Main {
                 String owner = ownerFirstName + " " + ownerLastName;
                 Car car = new Car(vin, regNumber, year, dateOfInsurance, ownerFirstName, ownerLastName);
                 //add to list
-                list.add(car);
+                list.put(vin, car);
                 if(vinOwners.get(vin)==null)
                     vinOwners.put(vin, new HashSet<>());
                 vinOwners.get(vin).add(owner);
@@ -53,49 +53,42 @@ public class Main {
         }
 
         //топ 5 по брой застраховки
+        List<Map.Entry<String, Integer>> vinInsCount = new ArrayList<>(insCars.entrySet());
+        vinInsCount.sort(Map.Entry.comparingByValue());
+        List<Map.Entry<String, Integer>> top5ByInsCount = vinInsCount.subList(vinInsCount.size()-6, vinInsCount.size()-1);
 
-
-
-        //обработка на данните
-        /*
-        2. сортиране възходящо по бр. собств
-        3. брой записи за всяка кола - бр. застраховки за всяка
-        1. Брой собственици на всяка кола
-        5. VIN -> най-скорошния рег номер на колата
-         */
-
-        //1. Брой собственици на всяка кола
-//        Set<Map.Entry<String, Integer>> listOwnersCounter = new ArrayList<>();
-//        for(Car c : list){
-//            Map.Entry<String, Integer> pair = new AbstractMap.SimpleEntry<>(c.getVIN(), );
-//            listOwnersCounter.add()
-//        }
+        List<Result> result = new ArrayList<>();
+        for(Map.Entry<String, Integer> entry : top5ByInsCount){
+            Result r = new Result();
+            r.setInsuranceCount(entry.getValue());
+            r.setOwnersCount(vinOwners.get(entry.getKey()).size());
+            r.setRegNo(insRegNo.get(entry.getKey()).getRegNumber());
+            result.add(r);
+        }
+        Collections.sort(result);
 
         //писане във файл
         File file2 = new File("output.txt");
-        if (file.exists()) {
+        if (file2.exists()) {
             System.out.println("File already exists");
             System.exit(1);
         }
+
         PrintWriter output = null;
         try {
             output = new PrintWriter(file2);
 
-//            4. да запишем във файла сортирани данни за колите
-//            6. регНомер на колата - , бр. соств, бр. застраховки
-//            output.print("John T Smith ");
-//            output.println(90);
-//            output.print("Eric K Jones ");
-//            output.println(85);
+            int i = 1;
+            for (Result r : result){
+                output.println(i + ". " + r.getRegNo() + " " + r.getOwnersCount() + " owners " + r.getInsuranceCount() + " insurances");
+                i++;
+            }
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }finally {
-            // Close the file
             output.close();
         }
-
-
     }
 
     private static int compareDates(String date1, String date2){
